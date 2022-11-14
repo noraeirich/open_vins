@@ -5,7 +5,7 @@
     <!-- ================================================================ -->
 
     <!-- what config we are going to run (should match folder name) -->
-    <arg name="verbosity"   default="DEBUG" /> <!-- ALL, DEBUG, INFO, WARNING, ERROR, SILENT -->
+    <arg name="verbosity"   default="INFO" /> <!-- ALL, DEBUG, INFO, WARNING, ERROR, SILENT -->
     <arg name="config"      default="rpng_sim" />
     <arg name="config_path" default="$(find ov_init)/../config/$(arg config)/estimator_config.yaml" />
 
