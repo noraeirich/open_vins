@@ -28,6 +28,8 @@
 #include "utils/Recorder.h"
 #include "utils/print.h"
 
+int numPose = 0;
+
 int main(int argc, char **argv) {
 
   // Create ros node

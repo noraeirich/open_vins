@@ -39,7 +39,12 @@ struct CameraData;
 class TrackBase;
 class FeatureInitializer;
 } // namespace ov_core
+
 namespace ov_init {
+
+// Init param file and variables for other namespaces
+extern std::ofstream init_param;
+
 class InertialInitializer;
 } // namespace ov_init
 
@@ -217,6 +222,8 @@ protected:
   // Timing statistic file and variables
   std::ofstream of_statistics;
   boost::posix_time::ptime rT1, rT2, rT3, rT4, rT5, rT6, rT7;
+
+  std::ofstream pose_param;
 
   // Track how much distance we have traveled
   double timelastupdate = -1;

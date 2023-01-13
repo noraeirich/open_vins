@@ -93,11 +93,18 @@ struct VioManagerOptions {
   bool zupt_only_at_beginning = false;
 
   /// If we should record the timing performance to file
-  bool record_timing_information = false;
+  bool record_timing_information = true;
 
   /// The path to the file we will record the timing information into
   std::string record_timing_filepath = "ov_msckf_timing.txt";
 
+  /// If we should record the timing performance to file
+  bool record_initparam_information = true;
+  bool record_poseparam_information = true;
+ 
+  /// The path to the file we will record the initialization data
+  std::string record_initparam_filepath = "extra.csv";
+  std::string record_poseparam_filepath = "vio.csv";
   /**
    * @brief This function will load print out all estimator settings loaded.
    * This allows for visual checking that everything was loaded properly from ROS/CMD parsers.
@@ -117,6 +124,10 @@ struct VioManagerOptions {
       parser->parse_config("zupt_only_at_beginning", zupt_only_at_beginning);
       parser->parse_config("record_timing_information", record_timing_information);
       parser->parse_config("record_timing_filepath", record_timing_filepath);
+      parser->parse_config("record_initparam_information", record_initparam_information);
+      parser->parse_config("record_initparam_filepath", record_initparam_filepath);
+      parser->parse_config("record_poseparam_information", record_poseparam_information);
+      parser->parse_config("record_poseparam_filepath", record_poseparam_filepath);
     }
     PRINT_DEBUG("  - dt_slam_delay: %.1f\n", dt_slam_delay);
     PRINT_DEBUG("  - zero_velocity_update: %d\n", try_zupt);
@@ -126,6 +137,10 @@ struct VioManagerOptions {
     PRINT_DEBUG("  - zupt_only_at_beginning?: %d\n", zupt_only_at_beginning);
     PRINT_DEBUG("  - record timing?: %d\n", (int)record_timing_information);
     PRINT_DEBUG("  - record timing filepath: %s\n", record_timing_filepath.c_str());
+    PRINT_DEBUG("  - record initparam?: %d\n", (int)record_initparam_information);
+    PRINT_DEBUG("  - record initparam filepath: %s\n", record_initparam_filepath.c_str());
+    PRINT_DEBUG("  - record poseparam?: %d\n", (int)record_poseparam_information);
+    PRINT_DEBUG("  - record poseparam filepath: %s\n", record_poseparam_filepath.c_str());
   }
 
   // NOISE / CHI2 ============================

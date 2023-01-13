@@ -140,6 +140,7 @@ bool StaticInitializer::initialize(double &timestamp, Eigen::MatrixXd &covarianc
   t_imu->set_value(imu_state);
   t_imu->set_fej(imu_state);
 
+
   // Create base covariance and its covariance ordering
   order.clear();
   order.push_back(t_imu);

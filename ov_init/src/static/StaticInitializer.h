@@ -35,6 +35,8 @@ class IMU;
 
 namespace ov_init {
 
+
+extern std::ofstream init_param;
 /**
  * @brief Initializer for a static visual-inertial system.
  *

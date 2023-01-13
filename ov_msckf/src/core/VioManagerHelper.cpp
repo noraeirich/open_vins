@@ -38,7 +38,6 @@ using namespace ov_type;
 using namespace ov_msckf;
 
 void VioManager::initialize_with_gt(Eigen::Matrix<double, 17, 1> imustate) {
-
   // Initialize the system
   state->_imu->set_value(imustate.block(1, 0, 16, 1));
   state->_imu->set_fej(imustate.block(1, 0, 16, 1));
@@ -75,7 +74,31 @@ void VioManager::initialize_with_gt(Eigen::Matrix<double, 17, 1> imustate) {
   PRINT_DEBUG(GREEN "[INIT]: position = %.4f, %.4f, %.4f\n" RESET, state->_imu->pos()(0), state->_imu->pos()(1), state->_imu->pos()(2));
 }
 
+
+bool startStamp = true;
+bool still_init = true;
+boost::posix_time::ptime startTime;
+boost::posix_time::ptime currTime;
+
 bool VioManager::try_to_initialize(const ov_core::CameraData &message) {
+
+    if(startStamp){
+      startTime = boost::posix_time::microsec_clock::local_time();
+      startStamp = false;
+    }
+    
+    currTime = boost::posix_time::microsec_clock::local_time();
+
+    if(((currTime-startTime).total_microseconds()*1e-6 >= 8.0) && still_init){
+      ROS_INFO(RED "TIME DIFFERENCE: %.9f\n", (currTime-startTime).total_microseconds()*1e-6);
+      ov_init::init_param.close();
+      // If the file exists, then delete it
+      if (boost::filesystem::exists(params.record_initparam_filepath)) {
+        boost::filesystem::remove(params.record_initparam_filepath);
+        PRINT_INFO(YELLOW "[STATS]: found old INIT file found, deleted...\n" RESET);
+      }
+      std::exit(EXIT_SUCCESS);
+    }
 
   // Directly return if the initialization thread is running
   // Note that we lock on the queue since we could have finished an update
@@ -143,6 +166,8 @@ bool VioManager::try_to_initialize(const ov_core::CameraData &message) {
                  state->_imu->bias_a()(2));
       PRINT_INFO(GREEN "[init]: position = %.4f, %.4f, %.4f\n" RESET, state->_imu->pos()(0), state->_imu->pos()(1), state->_imu->pos()(2));
 
+      still_init = false;
+
       // Remove any camera times that are order then the initialized time
       // This can happen if the initialization has taken a while to perform
       std::lock_guard<std::mutex> lck(camera_queue_init_mtx);
@@ -166,6 +191,24 @@ bool VioManager::try_to_initialize(const ov_core::CameraData &message) {
       camera_queue_init.clear();
 
     } else {
+      
+      if (params.record_initparam_information && !success && still_init) {
+        ov_init::init_param.close();
+        // If the file exists, then delete it
+        if (boost::filesystem::exists(params.record_initparam_filepath)) {
+          boost::filesystem::remove(params.record_initparam_filepath);
+          PRINT_INFO(YELLOW "[STATS]: found old INIT file found, deleted...\n" RESET);
+        }
+        // Create the directory that we will open the file in
+        boost::filesystem::path p(params.record_initparam_filepath);
+        boost::filesystem::create_directories(p.parent_path());
+        // Open our init param file!
+        ov_init::init_param.open(params.record_initparam_filepath, std::ofstream::out | std::ofstream::app);
+        // Write the header information into it
+        ov_init::init_param << "#timestamp(s) tx ty tz qx qy qz qw vx vy vz bgx bgy bgz bax bay baz" << std::endl;
+        ov_init::init_param.flush();
+      }
+
       auto init_rT2 = boost::posix_time::microsec_clock::local_time();
       PRINT_DEBUG(YELLOW "[init]: failed initialization in %.4f seconds\n" RESET, (init_rT2 - init_rT1).total_microseconds() * 1e-6);
       thread_init_success = false;

@@ -19,8 +19,11 @@
     <!-- saving trajectory path and timing information -->
     <arg name="dosave"      default="true" />
     <arg name="dotime"      default="true" />
-    <arg name="path_est"    default="/tmp/traj_estimate.txt" />
-    <arg name="path_time"   default="/tmp/traj_timing.txt" />
+    <arg name="path_est"    default="/tmp/ov_traj_estimate.txt" />
+    <arg name="path_time"   default="/tmp/ov_traj_timing.txt" />
+    <arg name="doinit"      default="true" />
+    <arg name="path_init"   default="/tmp/extra.csv" />
+    <arg name="path_pose"   default="/tmp/vio.csv" />
 
     <!-- if we should viz the groundtruth -->
     <arg name="dolivetraj"  default="true" />
@@ -42,6 +45,14 @@
         <!-- timing statistics recording -->
         <param name="record_timing_information"   type="bool"   value="$(arg dotime)" />
         <param name="record_timing_filepath"      type="string" value="$(arg path_time)" />
+
+        <!-- init param recording -->
+        <param name="record_initparam_information"   type="bool"   value="$(arg doinit)" />
+        <param name="record_initparam_filepath"      type="string" value="$(arg path_init)" />
+        
+        <!-- pose param recording -->
+        <param name="record_poseparam_information"   type="bool"   value="$(arg doinit)" />
+        <param name="record_poseparam_filepath"      type="string" value="$(arg path_pose)" />
 
     </node>
 

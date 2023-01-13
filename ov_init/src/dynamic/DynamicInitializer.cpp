@@ -41,6 +41,8 @@ using namespace ov_core;
 using namespace ov_type;
 using namespace ov_init;
 
+std::ofstream ov_init::init_param;
+
 bool DynamicInitializer::initialize(double &timestamp, Eigen::MatrixXd &covariance, std::vector<std::shared_ptr<ov_type::Type>> &order,
                                     std::shared_ptr<ov_type::IMU> &_imu, std::map<double, std::shared_ptr<ov_type::PoseJPL>> &_clones_IMU,
                                     std::unordered_map<size_t, std::shared_ptr<ov_type::Landmark>> &_features_SLAM) {
@@ -727,6 +729,7 @@ bool DynamicInitializer::initialize(double &timestamp, Eigen::MatrixXd &covarian
       factor_params.push_back(ceres_vars_vel.at(map_states.at(timestamp_k1)));
       factor_params.push_back(ceres_vars_bias_a.at(map_states.at(timestamp_k1)));
       factor_params.push_back(ceres_vars_pos.at(map_states.at(timestamp_k1)));
+      
       auto *factor_imu = new Factor_ImuCPIv1(cpi->DT, gravity, cpi->alpha_tau, cpi->beta_tau, cpi->q_k2tau, cpi->b_a_lin, cpi->b_w_lin,
                                              cpi->J_q, cpi->J_b, cpi->J_a, cpi->H_b, cpi->H_a, cpi->P_meas);
       problem.AddResidualBlock(factor_imu, nullptr, factor_params);
@@ -906,6 +909,20 @@ bool DynamicInitializer::initialize(double &timestamp, Eigen::MatrixXd &covarian
       state_imu(10 + i) = ceres_vars_bias_g[map_states[timestamp]][i];
       state_imu(13 + i) = ceres_vars_bias_a[map_states[timestamp]][i];
     }
+
+      if (init_param.is_open() && write) {
+        init_param.precision(5);
+        init_param.setf(std::ios::fixed, std::ios::floatfield);
+        // position and quaterions
+        init_param << timestamp << " "
+          << state_imu(4) << " " << state_imu(5) << " " << state_imu(6) << " "
+          << state_imu(0) << " " << state_imu(1) << " " << state_imu(2) << " " << state_imu(3)<< " "
+          << state_imu(7) << " " << state_imu(8) << " " << state_imu(9) << " "
+          << state_imu(10) << " " << state_imu(11) << " " << state_imu(12) << " "
+          << state_imu(13) << " " << state_imu(14) << " " << state_imu(15) << std::endl;
+        init_param.flush();
+      }
+    
     return state_imu;
   };
 
@@ -914,9 +931,13 @@ bool DynamicInitializer::initialize(double &timestamp, Eigen::MatrixXd &covarian
   if (_imu == nullptr) {
     _imu = std::make_shared<ov_type::IMU>();
   }
+
+  write = false;
   Eigen::VectorXd imu_state = get_pose(newest_cam_time);
+  write = true;
   _imu->set_value(imu_state);
   _imu->set_fej(imu_state);
+
 
   // Append our IMU clones (includes most recent)
   for (auto const &statepair : map_states) {

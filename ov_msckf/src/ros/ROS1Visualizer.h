@@ -196,7 +196,7 @@ protected:
   bool publish_calibration_tf = true;
 
   // Files and if we should save total state
-  bool save_total_state = false;
+  bool save_total_state = true;
   std::ofstream of_state_est, of_state_std, of_state_gt;
 };
 

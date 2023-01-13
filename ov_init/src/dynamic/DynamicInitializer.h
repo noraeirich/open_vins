@@ -25,6 +25,7 @@
 #include "init/InertialInitializerOptions.h"
 
 namespace ov_core {
+
 class FeatureDatabase;
 struct ImuData;
 } // namespace ov_core
@@ -37,6 +38,8 @@ class Vec;
 } // namespace ov_type
 
 namespace ov_init {
+
+extern std::ofstream init_param;
 
 /**
  * @brief Initializer for a dynamic visual-inertial system.
@@ -61,6 +64,8 @@ namespace ov_init {
  */
 class DynamicInitializer {
 public:
+  
+  bool write = false;
   /**
    * @brief Default constructor
    * @param params_ Parameters loaded from either ROS or CMDLINE

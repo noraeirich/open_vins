@@ -47,6 +47,8 @@ using namespace ov_core;
 using namespace ov_type;
 using namespace ov_msckf;
 
+int numPose = 0;
+
 VioManager::VioManager(VioManagerOptions &params_) : thread_init_running(false), thread_init_success(false) {
 
   // Nice startup message
@@ -94,7 +96,7 @@ VioManager::VioManager(VioManagerOptions &params_) : thread_init_running(false),
     // If the file exists, then delete it
     if (boost::filesystem::exists(params.record_timing_filepath)) {
       boost::filesystem::remove(params.record_timing_filepath);
-      PRINT_INFO(YELLOW "[STATS]: found old file found, deleted...\n" RESET);
+      PRINT_INFO(YELLOW "[STATS]: found old timing file found, deleted...\n" RESET);
     }
     // Create the directory that we will open the file in
     boost::filesystem::path p(params.record_timing_filepath);
@@ -108,6 +110,34 @@ VioManager::VioManager(VioManagerOptions &params_) : thread_init_running(false),
     }
     of_statistics << "re-tri & marg,total" << std::endl;
   }
+
+  if (params.record_initparam_information) {
+    // If the file exists, then delete it
+    if (boost::filesystem::exists(params.record_initparam_filepath)) {
+      boost::filesystem::remove(params.record_initparam_filepath);
+      PRINT_INFO(YELLOW "[STATS]: found old INIT file found, deleted...\n" RESET);
+    }
+    // Create the directory that we will open the file in
+    boost::filesystem::path p(params.record_initparam_filepath);
+    boost::filesystem::create_directories(p.parent_path());
+    // Open our init param file!
+    ov_init::init_param.open(params.record_initparam_filepath, std::ofstream::out | std::ofstream::app);
+    // Write the header information into it
+    ov_init::init_param << "#timestamp(s) tx ty tz qx qy qz qw vx vy vz bgx bgy bgz bax bay baz" << std::endl;
+  }
+
+  // if (params.record_poseparam_information) {
+  //   // If the file exists, then delete it
+  //   if (boost::filesystem::exists(params.record_poseparam_filepath)) {
+  //     boost::filesystem::remove(params.record_poseparam_filepath);
+  //     PRINT_INFO(YELLOW "[STATS]: found old pose file found, deleted...\n" RESET);
+  //   }
+  //   // Create the directory that we will open the file in
+  //   boost::filesystem::path p(params.record_poseparam_filepath);
+  //   boost::filesystem::create_directories(p.parent_path());
+  //   // Open our init param file!
+  //   pose_param.open(params.record_poseparam_filepath, std::ofstream::out | std::ofstream::app);
+  // }
 
   //===================================================================================
   //===================================================================================
@@ -624,6 +654,22 @@ void VioManager::do_feature_propagate_update(const ov_core::CameraData &message)
     distance += dx.norm();
   }
   timelastupdate = message.timestamp;
+
+  if (ov_init::init_param.is_open() && numPose <= 59) {
+    numPose++;
+    ov_init::init_param.precision(5);
+    pose_param.setf(std::ios::fixed, std::ios::floatfield);
+    // position and quaterions
+    ov_init::init_param << message.timestamp << " "
+      << state->_imu->pos()(0) << " " << state->_imu->pos()(1) << " " << state->_imu->pos()(2) << " "
+      << state->_imu->quat()(0) << " " << state->_imu->quat()(1) << " "
+      << state->_imu->quat()(2) << " " << state->_imu->quat()(3)
+      << std::endl;
+    ov_init::init_param.flush();
+  }else{
+    ROS_INFO("Saved 60 Poses after Initialization!");
+    std::exit(EXIT_SUCCESS);
+  }
 
   // Debug, print our current state
   PRINT_INFO("q_GtoI = %.3f,%.3f,%.3f,%.3f | p_IinG = %.3f,%.3f,%.3f | dist = %.2f (meters)\n", state->_imu->quat()(0),
